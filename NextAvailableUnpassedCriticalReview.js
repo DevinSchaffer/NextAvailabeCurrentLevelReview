@@ -12,15 +12,21 @@
 (function() {
     wkof.include('Apiv2');
     wkof.ready('Apiv2')
+        .then(getLevel)
         .then(getAssignments);
 
-    // Get assignment data and find when the next unpassed radical or kanji review item will be available.
-    function getAssignments() {
-        var assignmentFilter = {passed: false, subject_types: ['radical', 'kanji']};
-        wkof.Apiv2.fetch_endpoint('assignments', {filters: assignmentFilter}).then(function (assignments) {
-            assignments = assignments.data.sort((a, b) => (a.data.available_at > b.data.available_at) ? 1 : -1);
+    function getLevel() {
+        return wkof.Apiv2.fetch_endpoint('user');
+    }
 
-            if ((assignments.length)) {
+    // Get assignment data and find when the next unpassed radical or kanji review item will be available.
+    function getAssignments(level) {
+        let assignmentFilter = {passed: false, subject_types: ['radical', 'kanji'], levels: [level.data.level]};
+        wkof.Apiv2.fetch_endpoint('assignments', {filters: assignmentFilter}).then(function (assignments) {
+            assignments = assignments.data.filter(item => item.data.srs_stage > 0);
+
+            if (assignments.length) {
+                assignments = assignments.sort((a, b) => (a.available_at > b.available_at) ? 1 : -1);
                 displayCriticalCountdown(Date.parse(assignments[0].data.available_at));
             } else {
                 displayCriticalCountdown("Do Lessons!");
@@ -42,12 +48,12 @@
             availableAt = "Available Now";
         }
         else {
-            var hours = Math.floor((availableAt - Date.now()) / 3600000);
-            var minutes = 60 - new Date().getMinutes();
+            let hours = Math.floor((availableAt - Date.now()) / 3600000);
+            let minutes = 60 - new Date().getMinutes();
             availableAt = hours + " H " + minutes +  " M";
         }
 
-        var elem = document.createElement('li');
+        let elem = document.createElement('li');
         elem.className = "critical-countdown";
         elem.innerHTML = '<time>' + availableAt + '</time><i class="icon-time"></i> Next Critical Review';
         $('.next').after(elem);
