@@ -29,35 +29,56 @@
                 assignments = assignments.sort((a, b) => (a.available_at > b.available_at) ? 1 : -1);
                 displayCriticalCountdown(Date.parse(assignments[0].data.available_at));
             } else {
-                displayCriticalCountdown("Do Lessons!");
+                displayCriticalCountdown();
             }
         }
     )};
 
-    function setHeaderWidth() {
-        var headerCount = $('.dashboard section.review-status ul li').length;
-        var width = (100/headerCount);
-        $('.dashboard section.review-status ul li').css('width', width + '%');
-    }
-
-    function displayCriticalCountdown(availableAt) {
-        if (availableAt == "Do Lessons!") {
-            // Do nothing
+    function displayCriticalCountdown(availableAt = null) {
+        let delta;
+        if (availableAt == null) {
+            availableAt = "Do Lessons!";
         }
         else if (availableAt < Date.now()) {
             availableAt = "Available Now";
         }
         else {
-            let hours = Math.floor((availableAt - Date.now()) / 3600000);
-            let minutes = 60 - new Date().getMinutes();
-            availableAt = hours + " H " + minutes +  " M";
+            let deltaHours = Math.floor((availableAt - Date.now()) / 3600000);
+            let deltaMinutes = 60 - new Date().getMinutes();
+            delta = deltaHours + " H " + deltaMinutes +  " M";
+
+            availableAt = new Date(availableAt);
+            let hours = availableAt.getHours();
+            let amPM = hours > 12 ? "PM" : "AM";
+            if (hours > 12) hours -= 12;
+            let tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toDateString();
+
+            if (availableAt.toDateString() === new Date().toDateString()) {
+                availableAt = hours + " " + amPM;
+            } else if (availableAt.toDateString() === tomorrow) {
+                availableAt = "Tomorrow at " + hours + amPM;
+            } else {
+                let year = availableAt.getFullYear();
+                let month = padValue(availableAt.getMonth() + 1);
+                let day = padValue(availableAt.getDate());
+
+                availableAt = year + "-" + month + "-" + day + " " + hours + ":00 " + amPM
+            }
         }
 
-        let elem = document.createElement('li');
+        let elem = document.createElement('section');
         elem.className = "critical-countdown";
-        elem.innerHTML = '<time>' + availableAt + '</time><i class="icon-time"></i> Next Critical Review';
-        $('.next').after(elem);
+        elem.innerHTML = '<div><h1 class="text-xl leading-normal font-medium text-dark-gray m-0">Next Critical Review</h1>';
 
-        setHeaderWidth();
+        if (delta != null) {
+            elem.innerHTML += '<div>' + delta + ' from now</div>'
+        }
+
+        elem.innerHTML += '<div>' + availableAt + '</div>';
+        $('.progress-and-forecast').before(elem);
+    }
+
+    function padValue(value) {
+        return (value < 10) ? "0" + value : value;
     }
 })();
