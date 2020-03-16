@@ -51,7 +51,7 @@
             let hours = availableAt.getHours();
             let amPM = hours > 12 ? "PM" : "AM";
             if (hours > 12) hours -= 12;
-            let tomorrow = new Date(new Date().setDate(new Date().getDate() + 1)).toDateString();
+            let tomorrow = new Date(Date.now() + 86400000).toDateString();
 
             if (availableAt.toDateString() === new Date().toDateString()) {
                 availableAt = hours + " " + amPM;
